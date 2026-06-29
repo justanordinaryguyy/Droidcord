@@ -1,7 +1,7 @@
-name: Build APK
+name: Build Highly Optimized APK
 
 on:
-  workflow_dispatch: # Allows you to manually trigger the build
+  workflow_dispatch:
 
 jobs:
   build:
@@ -23,11 +23,21 @@ jobs:
       - name: Make Gradle Executable
         run: chmod +x ./gradlew
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
+      - name: Inject Aggressive Size Optimization Flags
+        run: |
+          echo "android.enableR8=true" >> gradle.properties
+          sed -i '/buildTypes {/a \
+                  release {\n\
+                      minifyEnabled true\n\
+                      shrinkResources true\n\
+                      proguardFiles getDefaultProguardFile("proguard-android-optimize.txt")\n\
+                  }' app/build.gradle || true
 
-      - name: Upload APK File
+      - name: Build Minified Release APK
+        run: ./gradlew assembleRelease
+
+      - name: Upload Smallest APK File
         uses: actions/upload-artifact@v4
         with:
-          name: Droidcord-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: Droidcord-Optimized-APK
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
