@@ -1,4 +1,4 @@
-name: Build Highly Optimized APK
+name: Build Light APK
 
 on:
   workflow_dispatch:
@@ -23,21 +23,19 @@ jobs:
       - name: Make Gradle Executable
         run: chmod +x ./gradlew
 
-      - name: Inject Aggressive Size Optimization Flags
+      - name: Strip Debug Overhead Safely
         run: |
-          echo "android.enableR8=true" >> gradle.properties
-          sed -i '/buildTypes {/a \
-                  release {\n\
-                      minifyEnabled true\n\
-                      shrinkResources true\n\
-                      proguardFiles getDefaultProguardFile("proguard-android-optimize.txt")\n\
-                  }' app/build.gradle || true
+          sed -i '/debug {/A \
+              debuggable false\n\
+              jniDebuggable false\n\
+              renderscriptDebuggable false\n\
+          ' app/build.gradle || true
 
-      - name: Build Minified Release APK
-        run: ./gradlew assembleRelease
+      - name: Build Lightweight APK
+        run: ./gradlew assembleDebug
 
-      - name: Upload Smallest APK File
+      - name: Upload Cleaned APK File
         uses: actions/upload-artifact@v4
         with:
-          name: Droidcord-Optimized-APK
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          name: Droidcord-Light-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
