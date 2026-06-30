@@ -1,41 +1,37 @@
-name: Build Light APK
+name: Build Droidcord APK
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Позволяет запускать сборку вручную из интерфейса GitHub
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
+      # 1. Клонируем код вашего форка Droidcord
+      - uses: actions/checkout@v4
 
-      - name: Set up Java JDK
+      # 2. Устанавливаем Java (необходим для Android-сборки)
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
           java-version: '17'
+          distribution: 'temurin'
 
+      # 3. Настраиваем Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Make Gradle Executable
-        run: chmod +x ./gradlew
-
-      - name: Strip Debug Overhead Safely
-        run: |
-          sed -i '/debug {/A \
-              debuggable false\n\
-              jniDebuggable false\n\
-              renderscriptDebuggable false\n\
-          ' app/build.gradle || true
-
-      - name: Build Lightweight APK
+      # 4. Собираем отладочную (debug) версию APK
+      #    Обратите внимание: это стандартная команда для Gradle-проектов.
+      #    Если разработчик Droidcord использует другую структуру, 
+      #    команда может называться `./gradlew assembleDebug` или `cordova build android`.
+      - name: Build APK
         run: ./gradlew assembleDebug
 
-      - name: Upload Cleaned APK File
+      # 5. Сохраняем готовый APK как артефакт, чтобы его можно было скачать
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Droidcord-Light-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: droidcord-apk
+          path: app/build/outputs/apk/debug/*.apk
